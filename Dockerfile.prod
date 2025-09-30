@@ -1,0 +1,22 @@
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Install deps
+COPY requirements.txt /app/
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+# Copy project files
+COPY . /app/
+
+# Collect static files (safe even if none)
+RUN python manage.py collectstatic --noinput || true
+
+# Expose port
+EXPOSE 8000
+
+# Run with Gunicorn (SQLite now, later switch to RDS)
+CMD ["gunicorn", "backend.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "4", "--threads", "2", "--timeout", "60"]
